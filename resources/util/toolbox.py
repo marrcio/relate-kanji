@@ -8,7 +8,7 @@ import urllib.parse
 import romkan
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
-from collections import Counter
+from collections import Counter, defaultdict
 
 example_dict = {'foo':1, 'bar':2, 'baz':3}
 katakana_range = re.compile(r'[\u30a0-\u30ff]')
@@ -139,6 +139,31 @@ def collision_comparison(collision_entry):
         set_jmdict()
     k, collisions_list = collision_entry
     return [jmdict[entry] for entry in collisions_list]
+
+def correct_little_book(place):
+    lb = load_data(place)
+    lb_kanji = dict_by_field(lb, "kanji")
+    resemblance_groups = {k["kanji"]:set(k["kanji"]) for k in lb}
+    for kanji in lb:
+        k_char = kanji["kanji"]
+        for look_a_like in kanji["looks_like"]:
+            resemblance_groups[k_char].add(look_a_like)
+            resemblance_groups[look_a_like] = resemblance_groups[k_char]
+            if k_char not in lb_kanji[look_a_like]["looks_like"]:
+                lb_kanji[look_a_like]["looks_like"].append(k_char)
+        if kanji["contains"]==[]:
+            kanji["squares"]==[]
+        elif kanji["squares"]==[]:
+            kanji["squares"]==["BAD"]
+    for kanji in lb:
+        k_char = kanji["kanji"]
+        for similar in resemblance_groups[k_char]:
+            if not (similar is k_char or similar in kanji["looks_like"]):
+                kanji["looks_like"].append(similar+"?")
+    destination = place.rsplit('.', 1)
+    destination[0] += '2'
+    destination = '.'.join(destination)
+    save_data(lb, destination)
 
 def has_katakana(reading):
     return bool(re.match(katakana_range, reading))
