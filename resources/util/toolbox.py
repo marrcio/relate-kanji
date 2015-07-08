@@ -149,18 +149,23 @@ def collision_comparison(collision_entry):
     k, collisions_list = collision_entry
     return [jmdict[entry] for entry in collisions_list]
 
-def correct_little_book(place):
+def update_little_book(place, log=None):
     lb = load_data(place)
     lb_kanji = dict_by_field(lb, "kanji")
     resemblance_groups = {k["kanji"]:set(k["kanji"]) for k in lb}
+    added_symmetry = defaultdict(list)
+    implied_symmetry = defaultdict(list)
     for kanji in lb:
         k_char = kanji["kanji"]
         for look_a_like in kanji["looks_like"]:
             if look_a_like in lb_kanji: # Radicals not in
-                resemblance_groups[k_char].add(look_a_like)
-                resemblance_groups[look_a_like] = resemblance_groups[k_char]
+                fusion = resemblance_groups[look_a_like].union(resemblance_groups[k_char])
+                resemblance_groups[look_a_like] = fusion
+                resemblance_groups[k_char] = fusion
                 if k_char not in lb_kanji[look_a_like]["looks_like"]:
                     lb_kanji[look_a_like]["looks_like"].append(k_char)
+                    added_symmetry[look_a_like].append(k_char)
+                    print("symmetric", look_a_like, k_char)
         if kanji["contains"]==[]:
             kanji["squares"]==[]
         elif kanji["squares"]==[]:
@@ -168,8 +173,12 @@ def correct_little_book(place):
     for kanji in lb:
         k_char = kanji["kanji"]
         for similar in resemblance_groups[k_char]:
-            if similar is not k_char and similar not in kanji["looks_like"]:
+            if similar != k_char and similar not in kanji["looks_like"]:
                 kanji["looks_like"].append(similar+"?")
+                implied_symmetry[k_char].append(similar)
+                print("implied", similar, k_char)
+    if log is not None:
+        save_data([added_symmetry, implied_symmetry], log)
     destination = place.rsplit('.', 1)
     destination[0] += '2'
     destination = '.'.join(destination)
