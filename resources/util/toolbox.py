@@ -19,41 +19,50 @@ problems = []
 
 #File related
 
-def load_data(filename, iterable=False, delimiter=','):
+def load_data(filename, iterable=True, delimiter=','):
     ext = os.path.splitext(filename)[1]
     if ext == '.json':
         if iterable:
-            return json_iter_loader(filename)
+            return base_iter_loader(filename, lambda x: json.loads(x))
         else:
-            return json_loader(filename)
+            return base_loader(filename, lambda x: json.loads(x))
     elif ext == '.csv' or ext == '.tsv':
         if iterable:
             return csv_iter_loader(filename, delimiter)
         else:
             return csv_loader(filename, delimiter)
     else:
-        raise ValueError('Extension ' + ext + ' not supported.')
+        if iterable:
+            return base_iter_loader(filename)
+        else:
+            return base_loader(filename)
 
 def save_data(data, filename, delimiter=','):
     ext = os.path.splitext(filename)[1]
     if ext == '.json':
-        return json_saver(data, filename)
+        return base_saver(data, filename,
+                          transformation=lambda x: json.dumps(x, ensure_ascii=False))
     elif ext == '.csv':
         return csv_saver(data, filename, delimiter)
     else:
-        raise ValueError('Extension ' + ext + ' not supported.')
+        return base_saver(data, filename)
 
-def json_loader(filename):
+def base_loader(filename, iterable, transformation=lambda x:x):
     holder = []
     with open(filename) as f:
         for line in f:
-            holder.append(json.loads(line))
+            holder.append(transformation(line))
     return holder
 
-def json_iter_loader(filename):
+def base_iter_loader(filename, transformation=lambda x:x):
     with open(filename) as f:
         for line in f:
-            yield json.loads(line)
+            yield transformation(line)
+
+def base_saver(data, filename, transformation=lambda x:x):
+    with open(filename, 'w') as f:
+        f.writelines(transformation(x)+'\n' for x in data)
+
 
 def csv_loader(filename, delimiter):
     holder = []
@@ -69,10 +78,6 @@ def csv_iter_loader(filename, delimiter):
         for row in reader:
             yield row
 
-def json_saver(data, filename):
-    with open(filename, 'w') as f:
-        f.writelines(json.dumps(x, ensure_ascii=False)+'\n' for x in data)
-
 def csv_saver(data, filename, delimiter):
     with open(filename, 'w') as f:
         writer = csv.writer(f)
@@ -82,6 +87,10 @@ def csv_saver(data, filename, delimiter):
 def pipe_filter(in_file, out_file, filter_f, **kwargs):
     source = load_data(in_file, iterable=True, **kwargs)
     save_data(filter(filter_f, source), out_file, **kwargs)
+
+def pipe_transform(in_file, out_file, transformation, **kwargs):
+    source = load_data(in_file, iterable=True, **kwargs)
+    save_data(map(transformation, source), out_file, **kwargs)
 
 #Web related
 
@@ -208,6 +217,7 @@ def visualize_bars(iterable, width=0.5, color='b', transformation=lambda x:x):
     x,y = zip(*c.items())
     plt.bar([n-width/2 for n in x], transformation(y), width=width, color=color)
     plt.grid(True)
+    return c
 
 #MISC
 
