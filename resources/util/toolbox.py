@@ -19,13 +19,13 @@ problems = []
 
 #File related
 
-def load_data(filename, iterable=True, delimiter=','):
+def load_data(filename, iterable=False, delimiter=','):
     ext = os.path.splitext(filename)[1]
     if ext == '.json':
         if iterable:
-            return base_iter_loader(filename, lambda x: json.loads(x))
+            return base_iter_loader(filename, transformation=json.loads)
         else:
-            return base_loader(filename, lambda x: json.loads(x))
+            return base_loader(filename, transformation=json.loads)
     elif ext == '.csv' or ext == '.tsv':
         if iterable:
             return csv_iter_loader(filename, delimiter)
@@ -47,7 +47,7 @@ def save_data(data, filename, delimiter=','):
     else:
         return base_saver(data, filename)
 
-def base_loader(filename, iterable, transformation=lambda x:x):
+def base_loader(filename, transformation=lambda x:x):
     holder = []
     with open(filename) as f:
         for line in f:
@@ -156,10 +156,11 @@ def correct_little_book(place):
     for kanji in lb:
         k_char = kanji["kanji"]
         for look_a_like in kanji["looks_like"]:
-            resemblance_groups[k_char].add(look_a_like)
-            resemblance_groups[look_a_like] = resemblance_groups[k_char]
-            if k_char not in lb_kanji[look_a_like]["looks_like"]:
-                lb_kanji[look_a_like]["looks_like"].append(k_char)
+            if look_a_like in lb_kanji: # Radicals not in
+                resemblance_groups[k_char].add(look_a_like)
+                resemblance_groups[look_a_like] = resemblance_groups[k_char]
+                if k_char not in lb_kanji[look_a_like]["looks_like"]:
+                    lb_kanji[look_a_like]["looks_like"].append(k_char)
         if kanji["contains"]==[]:
             kanji["squares"]==[]
         elif kanji["squares"]==[]:
@@ -167,7 +168,7 @@ def correct_little_book(place):
     for kanji in lb:
         k_char = kanji["kanji"]
         for similar in resemblance_groups[k_char]:
-            if not (similar is k_char or similar in kanji["looks_like"]):
+            if similar is not k_char and similar not in kanji["looks_like"]:
                 kanji["looks_like"].append(similar+"?")
     destination = place.rsplit('.', 1)
     destination[0] += '2'
