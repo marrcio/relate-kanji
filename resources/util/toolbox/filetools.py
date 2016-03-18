@@ -79,10 +79,13 @@ def csv_iter_loader(filename, delimiter):
             yield row
 
 def csv_saver(data, filename, delimiter):
-    with open(filename, 'w') as f:
+    with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
         for row in data:
-            writer.writerow(row)
+            if type(row) == str:
+                writer.writerow([row])
+            else:
+                writer.writerow(row)
 
 def pipe_filter(in_file, out_file, filter_f, **kwargs):
     source = load_data(in_file, iterable=True, **kwargs)

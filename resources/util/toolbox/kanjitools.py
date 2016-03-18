@@ -3,12 +3,18 @@ import xml.etree.ElementTree as ET
 import romkan
 import itertools
 import toolbox
+import xmltodict
+import json
+import functools
+from statistics import Statistics
 from collections import deque
 from toolbox.filetools import save_data, load_data, pipe_transform
 from collections import Counter, defaultdict
 from pathlib import Path
 
+hiragana_range = re.compile(r'[\u3040-\u309F]')
 katakana_range = re.compile(r'[\u30a0-\u30ff]')
+
 jmkanji = None
 jmdict = None
 
@@ -26,49 +32,51 @@ def get_dict_index(kanji, dict_name='henshall'):
     else:
         return -1
 
-def set_jmdict():
-    global jmdict
-    jmdict = dict_by_field(load_data('../data/jmdict_relevant.json'), 'ent_seq', int)
+def filter_jdict(dict_path, output_path):
+    """Transform the original XML dict in a resumed json only with 'teacheable' words."""
+    def _jdict_to_file(_, entry, words, f):
+        if 'k_ele' in entry:
+            if type(entry['k_ele']) != list:
+                entry['k_ele'] = [entry['k_ele']]
+            if any(x['keb'] in words for x in entry['k_ele']):
+                f.write(json.dumps(entry, ensure_ascii=False, sort_keys=True))
+                f.write('\n')
+        return True
+    S = Statistics()
+    wc_f = toolbox.load_data('../data/word_count_filtered_teacheable.csv')
+    words = set(word[1] for word in wc_f)
+    f = open(output_path, 'w')
+    callback = functools.partial(_jdict_to_file, words=words, f=f)
+    xmltodict.parse(open(dict_path, 'rb'), item_depth=2, item_callback=callback)
+    f.close()
 
-def collision_comparison(collision_entry):
-    if jmdict is None:
-        set_jmdict()
-    k, collisions_list = collision_entry
-    return [jmdict[entry] for entry in collisions_list]
+def double_filter_jdict(dict_path, output_path):
+    """Further resume the json by only adding example words."""
+    essential = set(x[0] for x in toolbox.load_data('../data/essential_words.csv'))
+    with open(output_path, 'w') as f:
+        for entry in toolbox.load_data(dict_path, iterable=True):
+            if any(x['keb'] in essential for x in entry['k_ele']):
+                f.write(json.dumps(entry, ensure_ascii=False, sort_keys=True))
+                f.write('\n')
 
-def update_little_book(place='../../../Copy/little_book.json',implied=False, log=None):
-    lb = load_data(place)
-    lb_kanji = dict_by_field(lb, "kanji")
-    resemblance_groups = {k["kanji"]:set(k["kanji"]) for k in lb}
-    added_symmetry = defaultdict(list)
-    implied_symmetry = defaultdict(list)
-    for kanji in lb:
-        k_char = kanji["kanji"]
-        for look_a_like in kanji["looks_like"]:
-            if look_a_like in lb_kanji: # Radicals not in
-                fusion = resemblance_groups[look_a_like].union(resemblance_groups[k_char])
-                resemblance_groups[look_a_like] = fusion
-                resemblance_groups[k_char] = fusion
-                if k_char not in lb_kanji[look_a_like]["looks_like"]:
-                    lb_kanji[look_a_like]["looks_like"].append(k_char)
-                    added_symmetry[look_a_like].append(k_char)
-                    # print("symmetric", look_a_like, k_char)
-    if implied:
-        for kanji in lb:
-            k_char = kanji["kanji"]
-            for similar in resemblance_groups[k_char]:
-                if similar != k_char and similar not in kanji["looks_like"]:
-                    kanji["looks_like"].append(similar+"?")
-                    implied_symmetry[k_char].append(similar)
-                    # print("implied", similar, k_char)
-    if log is not None and implied:
-        save_data([added_symmetry, implied_symmetry], log)
-    elif log is not None:
-        save_data([added_symmetry], log)
-    destination = place.rsplit('.', 1)
-    destination[0] += '2'
-    destination = '.'.join(destination)
-    save_data(lb, destination)
+
+def filter_word_count_teacheable(input_path='../data/word_count_filtered.csv',
+                                 output_path='../data/word_count_filtered_teacheable.csv'):
+    """Separate only the count, word pairs in which all the characters of the word are either
+    Jouyou Kanji or Hiragana/Katakana."""
+    wc = toolbox.load_data(input_path)
+    S = Statistics()
+    def is_wanted(x):
+        return x in S.jk_set or x in S.hira_kata
+    wc_f = [x for x in wc if all(is_wanted(c) for c in x[1])]
+    toolbox.save_data(wc_f, output_path)
+
+def filter_word_count_with_definition(input_path='../data/word_count_filtered_teacheable.csv',
+                                      output_path='../data/word_count_filtered_in_dicts.csv'):
+    words_in_dict = set(word[0] for word in toolbox.load_data('../data/words_in_dicts.csv'))
+    in_words = toolbox.load_data(input_path)
+    out_words = [count_word for count_word in in_words if count_word[1] in words_in_dict]
+    toolbox.save_data(out_words, output_path)
 
 def update_radicals_counter(book='../../../Copy/smallest_book.json',
                             rads_file='../../../Copy/radicals.txt',
@@ -98,10 +106,8 @@ def radicals_update_transform(line, counter):
 
 
 def guarantee_consistency(log_file='../data/log.txt'):
-    jk = toolbox.load_data('../data/jouyou_kanji.json')
-    rads = toolbox.load_data('../data/radicals.json')
-    toolbox.save_data(jk, '../data/jouyou_kanji_bkp.json')
-    toolbox.save_data(rads, '../data/radicals_bkp.json')
+    jk = toolbox.load_data_safe('../data/jouyou_kanji.json')
+    rads = toolbox.load_data_safe('../data/radicals.json')
     jk_d = toolbox.dict_by_field(jk, 'k')
     rads_d = toolbox.dict_by_field(rads, 'k')
     joined_d = dict()
@@ -183,14 +189,34 @@ def guarantee_consistency(log_file='../data/log.txt'):
 def has_katakana(reading):
     return bool(re.match(katakana_range, reading))
 
-def condensate_contents(contents, squares):
+def condensate_contents(contents, squares, also_join=True):
     """Joins two list in a round-robbin manner.
 
     Example: contents = ['a', 'b', 'c']; squares = ['+', '*']
     result = 'a+b*c'
     """
-    return''.join([elem for sublist in itertools.zip_longest(contents,squares, fillvalue='')
-                   for elem in sublist])
+    condensed_list = [elem
+                      for sublist in itertools.zip_longest(contents,squares, fillvalue='')
+                      for elem in sublist]
+    if condensed_list:
+        condensed_list.pop()
+    if also_join:
+        return ''.join(condensed_list)
+    else:
+        return condensed_list
+
+def get_contents_subgroups(contents, squares, complete=False):
+    condensed_list = condensate_contents(contents, squares, also_join=False)
+    l = len(condensed_list)
+    if complete:
+        for j in range(l, 1, -1): # from the length up to two elements
+            for i in range(l-j+1):
+                yield ''.join(condensed_list[i:i+j])
+        for elem in contents:
+            yield elem
+    else:
+        for i in range(0, l - 2, 2):
+            yield ''.join(condensed_list[i:i+3])
 
 def absolute_to_hira(thingie):
     romaji = romkan.to_hepburn(thingie)

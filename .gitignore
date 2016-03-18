@@ -53,9 +53,8 @@ docs/_build/
 # PyBuilder
 target/
 
-# Big dicts
-word_count.csv
-JMnedict.xml
+# Big Files
+JMnedict.xml.gz
 
 # Secrets
 uri.py
