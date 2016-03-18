@@ -54,8 +54,7 @@ docs/_build/
 target/
 
 # Big dicts
-word_count.csv
-JMnedict.xml
+JMnedict.xml.gz
 
 # Secrets
 uri.py
