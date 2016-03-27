@@ -1,5 +1,6 @@
 import re
 import xml.etree.ElementTree as ET
+import collections
 import romkan
 import itertools
 import toolbox
@@ -78,6 +79,48 @@ def filter_word_count_with_definition(input_path='../data/word_count_filtered_te
     in_words = toolbox.load_data(input_path)
     out_words = [count_word for count_word in in_words if count_word[1] in words_in_dict]
     toolbox.save_data(out_words, output_path)
+
+def _investigate_types(path, entry, results_dict):
+    if not isinstance(entry, collections.Mapping):
+        return
+    for k, v in entry.items():
+        results_dict[path + (k,)].add(type(v))
+        if type(v) == list:
+            for elem in v:
+                _investigate_types(path + (k,), elem, results_dict)
+        else:
+            _investigate_types(path + (k,), v, results_dict)
+
+def _correct_problematic_dicts(entry, path):
+    if len(path) == 1:
+        if path[0] in entry and type(entry[path[0]]) != list:
+            entry[path[0]] = [entry[path[0]]]
+    else:
+        if path[0] in entry:
+            relevant = entry[path[0]]
+            # The structure is at most one list > one problematic dict.
+            if type(relevant) == list:
+                for elem in relevant:
+                    _correct_problematic_dicts(elem, path[1:])
+            else:
+                _correct_problematic_dicts(relevant, path[1:])
+
+def get_types_investigation(input_path):
+    entries = toolbox.load_data(input_path)
+    results = defaultdict(set)
+    for entry in entries:
+        _investigate_types(tuple(), entry, results)
+    return entries, dict(results)
+
+def uniformize(input_path, output_path):
+    entries, results = get_types_investigation(input_path)
+    problem_paths = [k for k, v in results.items() if list in v and len(v) > 1]
+    for entry in entries:
+        for path in problem_paths:
+            _correct_problematic_dicts(entry, path)
+    toolbox.save_data(entries, output_path)
+
+
 
 def update_radicals_counter(book='../../../Copy/smallest_book.json',
                             rads_file='../../../Copy/radicals.txt',
@@ -175,14 +218,14 @@ def guarantee_consistency(log_file='../data/log.txt'):
         for supercomponent in details['ic+']:
             if joined_d[supercomponent]['ic']:
                 log_entries.append('On the kanji: ' + kanji +
-                                   ' added the supercomponent of ' + supercomponent)
+                                   ' added the super-component of ' + supercomponent)
                 details['ic+'].extend(joined_d[supercomponent]['ic'])
         details['ic+'] = list(set(details['ic+']))
         if len(details['ic']) == len(details['ic+']):
             details.pop('ic+', None)
         else:
             details['ic+'] = list(set(details['ic+']) - set(details['ic']))
-    log_entries.append('---Finished succesfully---')
+    log_entries.append('---Finished successfully---')
     toolbox.save_data(jk, '../data/jouyou_kanji.json')
     toolbox.save_data(rads, '../data/radicals.json')
     toolbox.save_data(log_entries, log_file)

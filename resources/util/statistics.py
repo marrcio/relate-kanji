@@ -14,6 +14,8 @@ class Statistics:
     WORDS_FILTERED_IN_DICTS = '../data/word_count_filtered_in_dicts.csv' # On some dict
     EXAMPLE_WORDS = '../data/example_words.csv'
     KANJI_AND_EXAMPLES = '../data/kanji_and_examples.json'
+    JMDICT_ESSENTIAL = '../data/jmdict_essential.json'
+    JMNDICT_ESSENTIAL = '../data/jmndict_essential_final.json'
 
     def __init__(self):
         self.minimal_set_up()
