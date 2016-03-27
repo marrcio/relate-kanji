@@ -33,7 +33,7 @@ def get_dict_index(kanji, dict_name='henshall'):
         return -1
 
 def filter_jdict(dict_path, output_path):
-    """Transform the original XML dict in a resumed json only with 'teacheable' words."""
+    """Transform the original XML dict in a resumed json only with 'teachable' words."""
     def _jdict_to_file(_, entry, words, f):
         if 'k_ele' in entry:
             if type(entry['k_ele']) != list:
@@ -43,7 +43,7 @@ def filter_jdict(dict_path, output_path):
                 f.write('\n')
         return True
     S = Statistics()
-    wc_f = toolbox.load_data('../data/word_count_filtered_teacheable.csv')
+    wc_f = toolbox.load_data('../data/word_count_filtered_teachable.csv')
     words = set(word[1] for word in wc_f)
     f = open(output_path, 'w')
     callback = functools.partial(_jdict_to_file, words=words, f=f)
@@ -60,8 +60,8 @@ def double_filter_jdict(dict_path, output_path):
                 f.write('\n')
 
 
-def filter_word_count_teacheable(input_path='../data/word_count_filtered.csv',
-                                 output_path='../data/word_count_filtered_teacheable.csv'):
+def filter_word_count_teachable(input_path='../data/word_count_filtered.csv',
+                                 output_path='../data/word_count_filtered_teachable.csv'):
     """Separate only the count, word pairs in which all the characters of the word are either
     Jouyou Kanji or Hiragana/Katakana."""
     wc = toolbox.load_data(input_path)
@@ -71,8 +71,9 @@ def filter_word_count_teacheable(input_path='../data/word_count_filtered.csv',
     wc_f = [x for x in wc if all(is_wanted(c) for c in x[1])]
     toolbox.save_data(wc_f, output_path)
 
-def filter_word_count_with_definition(input_path='../data/word_count_filtered_teacheable.csv',
+def filter_word_count_with_definition(input_path='../data/word_count_filtered_teachable.csv',
                                       output_path='../data/word_count_filtered_in_dicts.csv'):
+    """Filter the word count so that it only contains words that exist in one of the dicts."""
     words_in_dict = set(word[0] for word in toolbox.load_data('../data/words_in_dicts.csv'))
     in_words = toolbox.load_data(input_path)
     out_words = [count_word for count_word in in_words if count_word[1] in words_in_dict]

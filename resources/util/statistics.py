@@ -56,7 +56,7 @@ class Statistics:
         return kanji_examples
 
 
-    def get_refined_kanji_examples(self, percent_hold=0.95, num_hold=5, num_max=50):
+    def get_refined_kanji_examples(self, percent_hold=0.80, num_hold=5, num_max=50):
         unrefined = self.get_kanji_examples()
         dicts_set = set(x[1] for x in toolbox.load_data(Statistics.WORDS_FILTERED_IN_DICTS))
         for k,v in unrefined:
