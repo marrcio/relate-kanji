@@ -80,6 +80,22 @@ def filter_word_count_with_definition(input_path='../data/word_count_filtered_te
     out_words = [count_word for count_word in in_words if count_word[1] in words_in_dict]
     toolbox.save_data(out_words, output_path)
 
+def filter_jmndict_name_types(input_path='../data/jmndict.json',
+                              output_path='../data/jmndict_filtered.json'):
+    wanted_fields = {'place name',
+                     'company name',
+                     'railway station',
+                     'organization name',
+                     'full name of a particular person',
+                     'product name',
+                     'work of art, literature, music, etc. name'}
+    def filter_wanted(entry, wanted_fields):
+        return any(name_type in wanted_fields for trans in entry['trans']
+                   for name_type in trans['name_type'])
+
+    toolbox.pipe_filter(input_path, output_path,
+                        functools.partial(filter_wanted, wanted_fields=wanted_fields))
+
 def _investigate_types(path, entry, results_dict):
     if not isinstance(entry, collections.Mapping):
         return

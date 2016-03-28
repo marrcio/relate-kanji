@@ -19,11 +19,11 @@ A subset of entries from jmdict.json that has entries in essential_words.csv.
 ## jmndict.json
 A filtering, in a similar fashion of jmdict.json, of the JMNdict, a dictionary of names.
 
+## jmndict_filtered.json
+A filtering from the names dict that takes out all entries related to first/last personal names.
+
 ## jmndict_essential.json
 A filtering, in a similar fashion of jmdict_essential.json of the jmndict.json.
-
-## jmndict_essential_final.json
-Entries from jmndict_essential.json that are not already explained in jmdict_essential.json.
 
 ## jouyou_kanji.json
 The master file of this project, that contains most of the important information about the 2,136 Jouyou Kanji, such as its contents, look-a-likes, meaning and mnemonics.
@@ -59,13 +59,10 @@ Equivalent to the jouyou_kanji.json, but contains information of radicals used t
 Word count from the Japanese Wikipedia counting that contain at least one Jouyou Kanji.
 
 ## word_count_filtered_in_dicts.csv
-Entries from the word_count)filtered.csv that appear either in JMdict or JMNdict.
+Entries from the word_count_filtered.csv that appear either in JMdict or JMNdict.
 
 ## word_count_filtered_teacheable.csv
 A filtering that maintains only entries that are composed purely of hiragana, katakana and Jouyou Kanji, therefore taking out totally alien characters as alfa and beta and Kanjis outside from the Jouyou Kanji.
 
-## words_in_both.csv
-A list of words that appear in both JMdict and JMNdict.
-
 ## words_in_dict.csv
-A list of words that appear in either JMdict or JMNdict.
+A list of words that appear in either JMdict or JMNdict(filtered version).

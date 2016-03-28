@@ -15,7 +15,7 @@ class Statistics:
     EXAMPLE_WORDS = '../data/example_words.csv'
     KANJI_AND_EXAMPLES = '../data/kanji_and_examples.json'
     JMDICT_ESSENTIAL = '../data/jmdict_essential.json'
-    JMNDICT_ESSENTIAL = '../data/jmndict_essential_final.json'
+    JMNDICT_ESSENTIAL = '../data/jmndict_essential.json'
 
     def __init__(self):
         self.minimal_set_up()
@@ -98,11 +98,16 @@ class Statistics:
         return unrefined
 
     def estimate_number_necessary_for_stop(self, stop=0.95):
+        """Print in screen the number of kanjis satisfied with each range of number of examples."""
         ks = self.estimate_examples_cdfs(stop=stop)
         ds = []
         for kanji, detail in ks:
             ds.append(detail['distribution'])
         c = Counter(len(d) for d in ds)
+        for metric in range(1, 10):
+            print("%3d Examples: %4d" % (
+                  metric,
+                  sum(count for x, count in c.items() if x <= metric)))
         for metric in range(10, 100+1, 10):
             print("%3d Examples: %4d" % (
                   metric,
@@ -110,7 +115,7 @@ class Statistics:
 
 
     def analyze_kanji_hierarchy(self, result_file = '../data/kanji_hierarchy.json'):
-        """Find kanjis that share part of or the whole of their c+ condensed form"""
+        """Find kanjis that share part of or the whole of their components."""
         result = defaultdict(list)
         # First pass: puts each kanji as the first in its contents list of components
         for kanji, details in self.joined_d.items():
