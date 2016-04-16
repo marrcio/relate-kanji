@@ -54,7 +54,8 @@ docs/_build/
 target/
 
 # Big Files
-JMnedict.xml.gz
+JMnedict.xml
+word_count.csv
 
 # Secrets
 uri.py
