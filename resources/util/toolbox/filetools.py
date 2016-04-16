@@ -48,7 +48,7 @@ def base_loader(filename, transformation=lambda x:x):
             try:
                 holder.append(transformation(line))
             except ValueError:
-                raise ValueError("Error to load at line", i+1)
+                raise ValueError("Error to load at line %d" % i+1)
     return holder
 
 def base_iter_loader(filename, transformation=lambda x:x):
@@ -57,7 +57,7 @@ def base_iter_loader(filename, transformation=lambda x:x):
             try:
                 yield transformation(line)
             except ValueError:
-                raise ValueError("Error to load at line", i+1)
+                raise ValueError("Error to load at line %d" % i+1)
 
 def base_saver(data, filename, transformation=lambda x:x):
     with open(filename, 'w') as f:
@@ -80,7 +80,7 @@ def csv_iter_loader(filename, delimiter):
 
 def csv_saver(data, filename, delimiter):
     with open(filename, 'w', newline='') as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=delimiter)
         for row in data:
             if type(row) == str:
                 writer.writerow([row])

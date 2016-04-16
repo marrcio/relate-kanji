@@ -7,6 +7,9 @@ This file.
 ## jmdict.json
 A subset of the JMdict_e.xml file that only contains entries that refer to at least one word that is formed **solely** of hiragana/katakana/Jouyou Kanji.
 
+## jmdict_clean.json
+A filtering over jmdict, removing out dated kanji representations and archaisms.
+
 ## JMdict_DTD.xml
 Just the header of JMdict_e.xml.
 
