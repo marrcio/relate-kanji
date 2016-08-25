@@ -43,16 +43,16 @@ def save_data(data, filename, delimiter=',', ordered_keys=False):
 
 def base_loader(filename, transformation=lambda x:x):
     holder = []
-    with open(filename) as f:
+    with open(filename, encoding='utf8') as f:
         for i, line in enumerate(f):
             try:
                 holder.append(transformation(line))
             except ValueError:
-                raise ValueError("Error to load at line %d" % i+1)
+                raise ValueError("Error to load at line %d" % (i+1))
     return holder
 
 def base_iter_loader(filename, transformation=lambda x:x):
-    with open(filename) as f:
+    with open(filename, encoding='utf8') as f:
         for i, line in enumerate(f):
             try:
                 yield transformation(line)
@@ -60,26 +60,26 @@ def base_iter_loader(filename, transformation=lambda x:x):
                 raise ValueError("Error to load at line %d" % i+1)
 
 def base_saver(data, filename, transformation=lambda x:x):
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf8') as f:
         f.writelines(transformation(x)+'\n' for x in data)
 
 
 def csv_loader(filename, delimiter):
     holder = []
-    with open(filename) as f:
+    with open(filename, encoding='utf8') as f:
         reader = csv.reader(f, delimiter=delimiter)
         for row in reader:
             holder.append(row)
     return holder
 
 def csv_iter_loader(filename, delimiter):
-    with open(filename) as f:
+    with open(filename, encoding='utf8') as f:
         reader = csv.reader(f, delimiter=delimiter)
         for row in reader:
             yield row
 
 def csv_saver(data, filename, delimiter):
-    with open(filename, 'w', newline='') as f:
+    with open(filename, 'w', newline='', encoding='utf8') as f:
         writer = csv.writer(f, delimiter=delimiter)
         for row in data:
             if type(row) == str:

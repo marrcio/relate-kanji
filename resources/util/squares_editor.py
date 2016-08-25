@@ -10,8 +10,8 @@ NEXT_FLAG = 1
 EXIT_FLAG = -1
 SUCCESS_FLAG = 0
 
-# BOOK = '../data/jouyou_kanji.json'
-BOOK = '../data/radicals.json'
+BOOK = '../data/jouyou_kanji.json'
+# BOOK = '../data/radicals.json'
 
 #            R    G    B
 WHITE    = (255, 255, 255)

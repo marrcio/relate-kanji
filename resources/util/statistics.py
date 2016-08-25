@@ -4,15 +4,13 @@ import xml.etree.ElementTree as ET
 from structures import IP, IS
 from collections import namedtuple, defaultdict, Counter
 
-Example = namedtuple('Example', ['word', 'freq'])
-
 class Statistics:
 
-    def estimate_examples_cdfs(granularity=0.05, stop=0.95):
+    def estimate_examples_cdfs(self, granularity=0.05, stop=0.95):
         unrefined = toolbox.get_kanji_examples()
         dicts_set = set(x[1] for x in toolbox.load_data(IP.WORDS_FILTERED_IN_DICTS))
 
-        for kanji, details in unrefined:
+        for kanji, details in unrefined.items():
             details["distribution"] = []
             accum = 0
             for example in details["words"]:
@@ -29,7 +27,7 @@ class Statistics:
         """Print in screen the number of kanjis satisfied with each range of number of examples."""
         ks = self.estimate_examples_cdfs(stop=stop)
         ds = []
-        for kanji, detail in ks:
+        for kanji, detail in ks.items():
             ds.append(detail['distribution'])
         c = Counter(len(d) for d in ds)
         for metric in range(1, 10):
