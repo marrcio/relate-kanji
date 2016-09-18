@@ -27,6 +27,9 @@ class ImportantPaths(object):
     JMNEDICT_BASE = '../data/jmnedict.json'
     JMNEDICT_CLEAN = '../data/jmnedict_clean.json'
     JMNEDICT_ESSENTIAL = '../data/jmnedict_essential.json'
+    JMNEDICT_REFORMAT = '../data/jmnedict_reformat.json'
+
+    JDICT_FUSION = '../data/jdict_fusion.json'
 
     KANJIDICT_XML = '../data/kanjidic2.xml'
     KANJIDICT_JSON = '../data/kanjidict.json'

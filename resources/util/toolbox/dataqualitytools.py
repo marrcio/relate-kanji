@@ -286,19 +286,19 @@ def unwind_jdict(input_path=IP.JMDICT_ESSENTIAL, output_path=IP.JMDICT_UNWINDED)
                 new_entry = copy.deepcopy(entry)
                 new_entry['k_ele'] = elem
                 new_entry['r_ele'] = [r_ele for r_ele in entry['r_ele']
-                                      if 're_restr' not in r_ele or 
+                                      if 're_restr' not in r_ele or
                                       elem['keb'] in r_ele['re_restr']]
                 new_entry['sense'] = [sense for sense in entry['sense']
-                    if ('stagk' not in sense or 
+                    if ('stagk' not in sense or
                         elem['keb'] in sense['stagk']) and
                     ('stagr' not in sense or
-                     any(r_ele['reb'] in sense['stagr'] 
+                     any(r_ele['reb'] in sense['stagr']
                          for r_ele in new_entry['r_ele']))]
                 if new_entry['r_ele'] and new_entry['sense']:
                     new_entries.append(new_entry)
     toolbox.save_data(new_entries, output_path)
 
-def build_kanji_to_reading_pairs(input_path=IP.JMDICT_CLEAN, 
+def build_kanji_to_reading_pairs(input_path=IP.JMDICT_CLEAN,
                                  output_path=IP.WORDS_TO_READINGS):
     words_to_readings = set()
     for entry in toolbox.load_data(input_path, iterable=True):
@@ -316,7 +316,7 @@ def build_kanji_to_reading_pairs(input_path=IP.JMDICT_CLEAN,
                     words_to_readings.add((k,r))
     toolbox.save_data(sorted(words_to_readings), output_path)
 
-def build_interpretations(input_path=IP.WORDS_TO_READINGS, 
+def build_interpretations(input_path=IP.WORDS_TO_READINGS,
                           output_path=IP.INTERPRETATIONS):
     w2r = toolbox.load_data(input_path)
     interps = [toolbox.separate_readings(*x) for x in w2r]
@@ -328,14 +328,14 @@ def build_interpretations(input_path=IP.WORDS_TO_READINGS,
                 elem['origin_word'] = kanji
                 elem['origin_reading'] = reading
 
-    all_interps = [elem 
-                   for interp in interps 
-                   for poss in interp 
+    all_interps = [elem
+                   for interp in interps
+                   for poss in interp
                    for elem in poss]
     all_interps = sorted(all_interps, key=lambda x: (x['kanji'], x['reading']))
     proper_order = ["kanji", "reading", "best_match", "match", "diff", "executed_subs",
                     "origin_word", "origin_reading", "sub_list"]
-    all_interps = [toolbox.make_ordered_dict(d, proper_order) 
+    all_interps = [toolbox.make_ordered_dict(d, proper_order)
                    for d in all_interps]
     toolbox.save_data(all_interps, output_path)
 
@@ -350,15 +350,33 @@ def _is_of_readings(sense, entry):
     readings = {elem['reb'] for elem in entry['r_ele']}
     return ('stagr' not in sense) or any(stag in readings for stag in sense['stagr'])
 
-def build_jmdict_definition_map(input_path=IP.JMDICT_UNWINDED, 
-                                output_path=IP.WORDS_TO_DEFINITIONS):
+def convert_jmnedict_to_jmdict(input_path=IP.JMNEDICT_ESSENTIAL, output_path=IP.JMNEDICT_REFORMAT):
+    new = []
+    for entry in toolbox.load_data(input_path, iterable=True):
+        current = dict()
+        current['ent_seq'] = entry['ent_seq']
+        current['k_ele'] = entry['k_ele'][0]
+        current['r_ele'] = [entry['r_ele']]
+        current['sense'] = []
+        for meaning in entry['trans']:
+            current['sense'].append({'gloss': meaning['trans_det'], 'pos': meaning['name_type']})
+        new.append(current)
+    toolbox.save_data(new, output_path)
+
+def create_unified_dict(input_paths = (IP.JMDICT_UNWINDED, IP.JMNEDICT_REFORMAT),
+                        output_path = IP.JDICT_FUSION):
+    jdicts = toolbox.load_data(input_paths[0])
+    jdicts.extend(toolbox.load_data(input_paths[1]))
+    toolbox.save_data(jdicts, output_path)
+
+def build_jdict_definition_map(input_path=IP.JDICT_FUSION, output_path=IP.WORDS_TO_DEFINITIONS):
     entries = toolbox.load_data(input_path)
     kanji_to_results = defaultdict(list)
     for entry in entries:
         kanji_to_results[entry['k_ele']['keb']].append(entry)
 
     # Try to reduce the mapping in cases that a word matches to multiple definitions, using
-    # the validity of the reading to those kanjis, the priority of the reading, 
+    # the validity of the reading to those kanjis, the priority of the reading,
     for k, l in kanji_to_results.items():
         if len(l) == 1:
             continue
@@ -369,14 +387,14 @@ def build_jmdict_definition_map(input_path=IP.JMDICT_UNWINDED,
         refined = _take_what_you_can(refined, 'sense', lambda s, _: 'dial' not in s)
         refined = _take_what_you_can(refined, 'sense', _is_of_readings)
         refined = _take_what_you_can(
-            refined, 
-            'r_ele', 
+            refined,
+            'r_ele',
             lambda r, entry: toolbox.is_word_match(entry['k_ele']['keb'], r['reb']))
         kanji_to_results[k] = refined
     toolbox.save_data([kanji_to_results], output_path)
 
 
-def build_jmnedict_definition_map(input_path=IP.JMNEDICT_ESSENTIAL, 
+def build_jmnedict_definition_map(input_path=IP.JMNEDICT_ESSENTIAL,
                                   output_path=IP.WORDS_TO_NAMES):
     entries = toolbox.load_data(input_path)
     kanji_to_results = defaultdict(list)
@@ -387,8 +405,8 @@ def build_jmnedict_definition_map(input_path=IP.JMNEDICT_ESSENTIAL,
         if len(l) == 1:
             continue
         refined = _take_what_you_can(
-            l, 
-            'k_ele', 
+            l,
+            'k_ele',
             lambda k_ele, entry: toolbox.is_word_match(k_ele['keb'], entry['r_ele']['reb']))
         kanji_to_results[k] = refined
     toolbox.save_data([kanji_to_results], output_path)
@@ -450,11 +468,14 @@ def rebuild_base_files():
     print("Unwinding JMDICT")
     unwind_jdict()
 
-    print("Creating a map from word to definition on JMDICT")
-    build_jmdict_definition_map()
+    print("Reformating JMNEDICT")
+    convert_jmnedict_to_jmdict()
 
-    print("Creating a map from word to definition on JMDICT")
-    build_jmnedict_definition_map()
+    print("Creating a unified definition dict")
+    create_unified_dict()
+
+    print("Creating a map from word to definition on both dicts")
+    build_jdict_definition_map()
 
 
 
@@ -466,7 +487,7 @@ def update_radicals_counter(book='../../../Copy/smallest_book.json',
     counter = Counter(IS.rads)
     p = Path(rads_file)
     rads_file2 = str(p.with_name(p.stem + '_new' + p.suffix))
-    pipe_transform(rads_file, rads_file2, 
+    pipe_transform(rads_file, rads_file2,
                    lambda x: radicals_update_transform(x,counter))
     with open(rads_file2, 'a') as f:
         f.writelines('-----------------------\n')
@@ -496,17 +517,17 @@ def guarantee_consistency(log_file='../data/log.txt'):
         for lookalike in details['l']:
             if kanji not in IS.joined_d[lookalike]['l']:
                 IS.joined_d[lookalike]['l'].append(kanji)
-                log_entries.append('Added ' + kanji + 
+                log_entries.append('Added ' + kanji +
                                    ' to the lookalikes of ' + lookalike)
         for component in details['c']:
             if kanji not in IS.joined_d[component]['ic']:
                 IS.joined_d[component]['ic'].append(kanji)
-                log_entries.append('Added ' + kanji + 
+                log_entries.append('Added ' + kanji +
                                    ' to the is components of ' + component)
         if 'alt' in details:
             for component in details['alt']:
                 IS.joined_d[component]['ic'].append(kanji)
-                log_entries.append('Added ' + kanji + 
+                log_entries.append('Added ' + kanji +
                                    ' to the is alternate components of ' +
                                    component)
     # second pass: recursive c, s and ic.
@@ -526,7 +547,7 @@ def guarantee_consistency(log_file='../data/log.txt'):
         while i < len(details['c+']):
             if len(IS.joined_d[details['c+'][i]]['c']) > 0:
                 log_entries.append('On the kanji: ' + kanji +
-                                   ' replaced the component: ' + 
+                                   ' replaced the component: ' +
                                    details['c+'][i] +
                                    ' for its subcomponents')
                 if details['c+'][i] not in details['c'] and details['c+'][i] not in details['cc']:

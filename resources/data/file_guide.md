@@ -19,14 +19,20 @@ The full JMdict in English language.
 ## jmdict_essential.json
 A subset of entries from jmdict.json that has entries in essential_words.csv.
 
-## jmndict.json
+## jmnedict.json
 A filtering, in a similar fashion of jmdict.json, of the JMNdict, a dictionary of names.
 
-## jmndict_filtered.json
+## jmnedict_filtered.json
 A filtering from the names dict that takes out all entries related to first/last personal names.
 
-## jmndict_essential.json
+## jmnedict_essential.json
 A filtering, in a similar fashion of jmdict_essential.json of the jmndict.json.
+
+## jmnedict_reformat.json
+A transformation from the normal format of the names dict to mimick the normal dict.
+
+## jdict_fusion.json
+A fusion from jmdict_unwinded and jmnedict_reformat
 
 ## jouyou_kanji.json
 The master file of this project, that contains most of the important information about the 2,136 Jouyou Kanji, such as its contents, look-a-likes, meaning and mnemonics.
