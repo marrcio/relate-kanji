@@ -4,7 +4,8 @@ class ImportantPaths(object):
     JOUYOU_PATH = '../data/jouyou_kanji.json'
     EXTRA_PATH = '../data/extra_kanji.json'
     RADICALS_PATH = '../data/radicals.json'
-    RAW_WORDS_PATH = '../data/word_count.csv'
+    # RAW_WORDS_PATH = '../data/word_count.csv' # Wikipedia words
+    RAW_WORDS_PATH = '../data/word_count_novels.csv'
     WORDS_FILTERED = '../data/word_count_filtered.csv' # Words with joyou kanji
     WORDS_TEACHABLE = '../data/word_count_filtered_teachable.csv'
     WORDS_FILTERED_IN_DICTS = '../data/word_count_filtered_in_dicts.csv' # On some dict
@@ -58,6 +59,7 @@ class ImportantStructures(object):
         self.hira_kata = set(chr(x) for x in range(ord('\u3041'), ord('\u30ff')))
         self.teachable_set = self.acceptable_set | self.hira_kata
         self.rads = toolbox.load_data(IP.RADICALS_PATH)
+        self.rads_set = set(k['k'] for k in self.rads)
         self.extra = toolbox.load_data(IP.EXTRA_PATH)
         self.jk_d = toolbox.dict_by_field(self.jk, 'k')
         self.rads_d = toolbox.dict_by_field(self.rads, 'k')

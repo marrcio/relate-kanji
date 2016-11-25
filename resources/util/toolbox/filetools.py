@@ -10,7 +10,7 @@ def load_data_safe(filename, delimiter=','):
     save_data(data, bkp_filename, delimiter)
     return data
 
-def load_data(filename, iterable=False, delimiter=','):
+def load_data(filename, iterable=False, delimiter=None):
     ext = Path(filename).suffix
     if ext == '.json':
         if iterable:
@@ -20,6 +20,7 @@ def load_data(filename, iterable=False, delimiter=','):
             return base_loader(filename, transformation= lambda x:
                                json.loads(x, object_pairs_hook=OrderedDict))
     elif ext == '.csv' or ext == '.tsv':
+        delimiter = delimiter or (',' if ext == '.csv' else '\t')
         if iterable:
             return csv_iter_loader(filename, delimiter)
         else:
@@ -38,6 +39,8 @@ def save_data(data, filename, delimiter=',', ordered_keys=False):
                                                               sort_keys=ordered_keys))
     elif ext == '.csv':
         return csv_saver(data, filename, delimiter)
+    elif ext == '.tsv':
+        return csv_saver(data, filename, delimiter='\t')
     else:
         return base_saver(data, filename)
 

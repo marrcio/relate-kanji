@@ -12,7 +12,7 @@ from structures import IP, IS
 
 def filter_word_count(input_path=IP.RAW_WORDS_PATH, output_path=IP.WORDS_FILTERED, lower=2):
     holder = []
-    for entry in toolbox.load_data(IP.RAW_WORDS_PATH, iterable=True):
+    for entry in toolbox.load_data(input_path, iterable=True):
         if int(entry[0]) > lower and any(char in toolbox.IS.jk_set for char in entry[1]):
             holder.append(entry)
     toolbox.save_data(holder, output_path)
